@@ -1,0 +1,19 @@
+{
+    "name": "unsch_nodejs",
+    "version": "1.0.0",
+    "description": "",
+    "main": "app.js",
+    "scripts": {
+        "test": "echo \"(Sin pruebas todavía)\" && exit 0",
+        "start": "node app.js"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^5.1.0"
+    }
+}
