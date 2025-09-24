@@ -52,32 +52,26 @@ jobs:
         echo " Ejecutando auditoría de seguridad..."
         npm audit --audit-level=high
     
-    # ========== ETAPA 3: DEPLOY (SIMULADO) ==========
-    - name: Empaquetar aplicación para despliegue
+       # ========== ETAPA 3: DEPLOY CON DOCKER ==========
+    - name: Construir imagen Docker de producción
       run: |
-        echo " Empaquetando aplicación..."
-        mkdir -p dist
-        cp -r app.js package.json package-lock.json dist/
-        tar -czf mi-aplicacion.tar.gz dist/
-        echo " Aplicación empaquetada: mi-aplicacion.tar.gz"
-    
-    - name: Subir artifact (Preparación para deploy)
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-build-package
-        path: mi-aplicacion.tar.gz
-    
-    - name: Simular despliegue en producción (DEPLOY)
+        echo "🐳 Construyendo imagen Docker..."
+        docker build -t mi-app-produccion:latest .
+        echo "✅ Imagen Docker construida"
+        docker images mi-app-produccion
+
+    - name: Probar contenedor en entorno simulado
       run: |
-        echo "========== INICIANDO DESPLIEGUE =========="
-        echo "Conectando con servidor de producción..."
-        echo "Subiendo archivos..."
-        echo "Configurando entorno..."
-        echo "Health check: http://tu-app.com/health"
-        echo "DESPLIEGUE EN PRODUCCIÓN EXITOSO!"
-        echo ""
-        echo "RESUMEN DEL PIPELINE:"
-        echo "✓ BUILD: Dependencias instaladas"
-        echo "✓ TEST: Pruebas ejecutadas" 
-        echo "✓ DEPLOY: Aplicación desplegada en producción"
-        echo "¡Pipeline CI/CD completado exitosamente!"
+        echo "🚀 Iniciando contenedor..."
+        docker run -d --name app-test -p 3000:3000 mi-app-produccion:latest
+        sleep 5
+        echo "🔍 Health check..."
+        curl -f http://localhost:3000/health && echo "✅ App funciona en Docker"
+        docker stop app-test
+        docker rm app-test
+
+    - name: Simular despliegue en producción
+      run: |
+        echo "🎉 ¡DESPLIEGUE EN DOCKER EXITOSO!"
+        echo "✅ Contenedor construido y probado"
+        echo "🚀 Listo para producción"
