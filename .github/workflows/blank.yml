@@ -1,4 +1,4 @@
-name: CI - Node.js
+name: CI/CD - Node.js Application
 
 on:
   push:
@@ -8,49 +8,76 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Lint (opcional)
-        run: |
-          if npm run | grep -q "lint"; then
-            npm run lint
-          else
-            echo "No hay script lint, se omite."
-          fi
-
-      - name: Test (si existe script)
-        run: |
-          TEST_SCRIPT=$(node -p "require('./package.json').scripts?.test || ' '")
-          if [ -n "$TEST_SCRIPT" ] && ! echo "$TEST_SCRIPT" | grep -qi "no test specified"; then
-            npm test
-          else
-            echo "No hay pruebas definidas, se omite."
-          fi
-
-      - name: Seguridad básica (npm audit, no falla el build)
-        continue-on-error: true
-        run: npm audit --audit-level=high
-
-      - name: Empaquetar artifact (excluye node_modules)
-        run: |
-          git archive --format=tar.gz -o mi-primera-app.tar.gz HEAD
-
-      - name: Subir artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mi-primera-app
-          path: mi-primera-app.tar.gz
+    # ========== ETAPA 1: BUILD ==========
+    - name: Checkout del código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Instalar dependencias (BUILD)
+      run: npm ci
+      env:
+        CI: true
+    
+    # ========== ETAPA 2: TEST ==========
+    - name: Ejecutar Linter (Análisis de código)
+      run: |
+        if npm run | grep -q "lint"; then
+          npm run lint
+        else
+          echo "✓ No hay script lint, se omite."
+        fi
+    
+    - name: Ejecutar pruebas automáticas (TEST)
+      run: |
+        TEST_SCRIPT=$(node -p "require('./package.json').scripts.test || ' '")
+        if [ -n "$TEST_SCRIPT" ] && ! echo "$TEST_SCRIPT" | grep -qi "no test specified"; then
+          echo " Ejecutando pruebas..."
+          npm test
+        else
+          echo "✓ No hay pruebas definidas, se omite."
+        fi
+    
+    - name: Auditoría de seguridad
+      continue-on-error: true
+      run: |
+        echo " Ejecutando auditoría de seguridad..."
+        npm audit --audit-level=high
+    
+    # ========== ETAPA 3: DEPLOY (SIMULADO) ==========
+    - name: Empaquetar aplicación para despliegue
+      run: |
+        echo " Empaquetando aplicación..."
+        mkdir -p dist
+        cp -r app.js package.json package-lock.json dist/
+        tar -czf mi-aplicacion.tar.gz dist/
+        echo " Aplicación empaquetada: mi-aplicacion.tar.gz"
+    
+    - name: Subir artifact (Preparación para deploy)
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-build-package
+        path: mi-aplicacion.tar.gz
+    
+    - name: Simular despliegue en producción (DEPLOY)
+      run: |
+        echo "========== INICIANDO DESPLIEGUE =========="
+        echo "Conectando con servidor de producción..."
+        echo "Subiendo archivos..."
+        echo "Configurando entorno..."
+        echo "Health check: http://tu-app.com/health"
+        echo "DESPLIEGUE EN PRODUCCIÓN EXITOSO!"
+        echo ""
+        echo "RESUMEN DEL PIPELINE:"
+        echo "✓ BUILD: Dependencias instaladas"
+        echo "✓ TEST: Pruebas ejecutadas" 
+        echo "✓ DEPLOY: Aplicación desplegada en producción"
+        echo "¡Pipeline CI/CD completado exitosamente!"
